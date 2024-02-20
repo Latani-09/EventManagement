@@ -1,32 +1,32 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState,useEffect } from 'react';
 import Form from 'react-bootstrap/Form';
-import FormGroup from 'react-bootstrap/FormGroup'
-import { ToggleButton } from 'react-bootstrap';
-import styles from './eventDashboard.module.css';
+import styles from './eventCalender.module.css';
 import authService from './api-authorization/AuthorizeService';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // Declare addEvent function here
 
 export const EventManagement = () => {
     const [seen, setSeen] = useState(false);
-
+    const [hostID, setHostID] = useState(null);
     const togglePop = () => {
         setSeen(!seen);
     };
+
     const addEvent = async (EventToAdd) => {
         const token = await authService.getAccessToken();
         console.log('event came to event managetent', EventToAdd);
-        var object = {};
-        EventToAdd.forEach(function (value, key) {
-            object[key] = value;
-        });
-        var event = JSON.stringify(object);
+        // var object = {};
+        //EventToAdd.forEach(function (value, key) {
+          //  object[key] = value;});
+        //var event = JSON.stringify(object);
         const response = await fetch('Event/createEvent', {
             method: 'post',
             headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(event)
+            body: JSON.stringify(EventToAdd)
         });
 
         const data = await response.json();
@@ -36,19 +36,135 @@ export const EventManagement = () => {
        
         // Handle the data as needed, e.g., update state or perform other actions
     };
+    const [loadingEvents, setLoading] = useState(false);
+    const [Events, setEvents] = useState([]);
+   
+    
+
+    useEffect(() => {
+        populateEvents();
+    }, []); // Empty dependency array to mimic componentDidMount
+
+    const populateEvents = async () => {
+        try {
+            setLoading(true);
+            const token = await authService.getAccessToken();
+            const user = await authService.getUser();
+            setHostID(user.name);
+
+            const response = await fetch(`Event/getEvents/${user.name}`, {
+                headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                setEvents(data);
+                setLoading(false);
+            } else {
+                console.error("Invalid data format for Events:", data);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    };
+
+
+    const renderEventsTable = (Events, seen, setSeen) => {
+
+
+        const togglePop = () => {
+            setSeen(!seen);
+        };
+        let expandedEventId = null;
+        const deleteEvent = async (EventId) => {
+            try {
+                const token = await authService.getAccessToken();
+                const response = await fetch(`Event/EventDelete${EventId}`, {
+                    method: 'delete',
+                    headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                });
+
+                if (response.ok) {
+                    toast.success("Event deleted successfully!");
+
+                    // Optionally, you can update the state or perform other actions after a successful deletion.
+                } else {
+                    const errorData = await response.json();
+                    toast.error(`Error deleting Event: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error("An error occurred during Event deletion:", error);
+                toast.error("An unexpected error occurred while deleting the Event.");
+            }
+        }
+        const handleExpand = (EventId) => {
+            expandedEventId = (EventId === expandedEventId ? null : EventId);
+        };
+
+        const handleEdit = (EventId) => {
+            // Handle edit operation
+            console.log(`Edit Event with ID: ${EventId}`);
+        };
+
+        const handleDelete = (EventId) => {
+            deleteEvent(EventId);
+
+            // Handle delete operation
+
+            console.log(`Delete Event with ID: ${EventId}`);
+        };
+
+        let today = new Date();
+
+
+
+        return (
+            <div>
+                <div className={styles.gridStyle}>
+                    {Events.map((Event) => (
+                        <div key={Event.EventID} className={styles.tileStyle}>
+                            <h5 className={styles.h3Style}>{Event.title}</h5>
+                            {(Event.startDate == null) ? (<p>Date will be announced soon</p>) : (
+                                <p>Starting Date: {(Event.startDate.split('T')[0] == today.toISOString().split('T')[0]) ? ('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5)) : (Event.startDate.split('T')[0] + ' ' + Event.startDate.split('T')[1].slice(0, 5))}</p>)
+                            }
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-primary" onclick="handleEdit(Event.EventID)">
+                                    Edit
+                                </button>
+                                <button class="btn btn-danger" onclick="handleDelete(Event.EventID)">
+                                    Delete
+                                </button>
+                            </div>
+
+                        </div>
+                    ))}
+
+                </div>
+            </div>)
+
+    }
+
+    let Events_view = loadingEvents
+        ? <p><em>Loading...</em></p>
+        : renderEventsTable(Events);
+
     return (
         <div>
             <div>
-                <button onClick={togglePop} className={styles.addButtonStyle}>+</button>
-                {seen ? <Popup toggle={togglePop} addTask={addEvent} /> : null}
+                <button onClick={togglePop} className="btn-btn-primary">Host an Event</button>
+                {seen ? <Popup toggle={togglePop} addEvent={addEvent} hostID={hostID} setHostID={setHostID} /> : null}
             </div>
+            <div>
+                <h1>Planned events</h1>
+                <div>{Events_view}</div>
 
+            </div>
         </div>
     );
 }
 
-const Popup = ({ toggle, addTask }) => {
-
+const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
+    const [eventPrivacy, onPrivacyChange] = useState('Public');
     const [eventName, onEventNameChange] = useState( '');
     const [description, onDescriptionChange] = useState('');
     const [startDate, onStartDateChange] = useState(new Date());
@@ -63,18 +179,30 @@ const Popup = ({ toggle, addTask }) => {
         onStartDateChange(startDate);
         onEndDateChange(startDate);
     };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-       
+        
+        const offsetInMinutes = 330; // UTC+5:30 (5 hours and 30 minutes ahead of UTC)
+
+        // Adjust the date by subtracting the offset (in milliseconds)
+        const adjustedDate = new Date(startDate.getTime() + offsetInMinutes * 60000);
+        console.log('start Date --------------------------------------', startDate, startDate.toISOString(), adjustedDate.toISOString());
+        if (hostID == null) {
+            const user =  authService.getUser();
+            setHostID(user.name);
+        }
         var event_to_add = {
 
             Title: eventName,
             Description: description,
-            StartDate: startDate,
+            StartDate: adjustedDate.toISOString(),
+            Location: location,
+            hostID: hostID
             
         };
 
-        addTask(event_to_add);
+        addEvent(event_to_add);
 
         toggle(); // Close the popup after submitting
     };
@@ -105,6 +233,16 @@ const Popup = ({ toggle, addTask }) => {
                                 <input
                                     type="text"
                                     className="form-control"
+                                    value={location}
+                                    onChange={(e) => onLocationChange(e.target.value)}
+                                    placeholder="Enter description"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
                                     value={description}
                                     onChange={(e) => onDescriptionChange(e.target.value)}
                                     placeholder="Enter description"
@@ -121,13 +259,16 @@ const Popup = ({ toggle, addTask }) => {
                                     (
                                         <DatePicker
                                             selected={startDate}
-                                            onChange={(date) => handleDateChange(date)}
+                                            onChange={handleDateChange}
+                                            showTimeSelect
+                                            dateFormat="Pp"
                                         />
                                     )
                                 }
 
                             </div>
-                           
+                            <div>
+                            </div>
 
                             <div className="modal-footer">
                                 <button type="submit" className="btn btn-primary">

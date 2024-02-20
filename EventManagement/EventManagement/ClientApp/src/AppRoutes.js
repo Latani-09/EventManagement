@@ -1,6 +1,6 @@
 import ApiAuthorzationRoutes from './components/api-authorization/ApiAuthorizationRoutes';
 import { EventManagement } from "./components/EventManagement";
-import { EventDashboard } from "./components/EventDashboard";
+import { EventCalender } from "./components/EventCalender";
 import { Home } from "./components/Home";
 
 const AppRoutes = [
@@ -13,9 +13,9 @@ const AppRoutes = [
       element: <EventManagement />
   },
   {
-    path: '/eventDashboard',
+    path: '/EventCalender',
     requireAuth: true,
-    element: <EventDashboard />
+    element: <EventCalender />
   },
   ...ApiAuthorzationRoutes
 ];

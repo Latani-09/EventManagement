@@ -1,26 +1,124 @@
-import React, { Component } from 'react';
+import React, { Component,useState,useEffect } from 'react';
+import authService from './api-authorization/AuthorizeService';
+import {toast} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import styles from './eventCalender.module.css';
 
-export class Home extends Component {
-  static displayName = Home.name;
+export const Home=()=> {
+    const [loadingEvents, setLoading] = useState(false);
+    const[Events, setEvents] = useState([]);
+    const[seen, setSeen] = useState(false);
 
-  render() {
+    useEffect(() => {
+        populateEvents();
+    }, []); // Empty dependency array to mimic componentDidMount
+
+    const populateEvents = async () => {
+        try {
+            setLoading(true);
+            const token = await authService.getAccessToken();
+            const response = await fetch('Event', {
+                headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                setEvents(data);
+                setLoading(false);
+            } else {
+                console.error("Invalid data format for Events:", data);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    };
+
+
+    const renderEventsTable = (Events, seen, setSeen) => {
+
+
+        const togglePop = () => {
+            setSeen(!seen);
+        };
+        let expandedEventId = null;
+        const deleteEvent = async (EventId) => {
+            try {
+                const token = await authService.getAccessToken();
+                const response = await fetch(`Event/EventDelete${EventId}`, {
+                    method: 'delete',
+                    headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                });
+
+                if (response.ok) {
+                    toast.success("Event deleted successfully!");
+
+                    // Optionally, you can update the state or perform other actions after a successful deletion.
+                } else {
+                    const errorData = await response.json();
+                    toast.error(`Error deleting Event: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error("An error occurred during Event deletion:", error);
+                toast.error("An unexpected error occurred while deleting the Event.");
+            }
+        }
+        const handleExpand = (EventId) => {
+            expandedEventId = (EventId === expandedEventId ? null : EventId);
+        };
+
+        const handleEdit = (EventId) => {
+            // Handle edit operation
+            console.log(`Edit Event with ID: ${EventId}`);
+        };
+
+        const handleDelete = (EventId) => {
+            deleteEvent(EventId);
+
+            // Handle delete operation
+
+            console.log(`Delete Event with ID: ${EventId}`);
+        };
+
+        let today = new Date();
+        const editSymbol = '\u270E'; // Edit symbol
+        const deleteSymbol = '\u2716'; // Delete symbol
+        const expandSymbol = '\u2193'; // Expand symbol
+
+
+        return (
+            <div>
+                <div className={styles.gridStyle}>
+                    {Events.map((Event) => (
+                        <div key={Event.EventID} className={styles.tileStyle}>
+                            <h5 className={styles.h3Style}>{Event.title}</h5>
+                            {(Event.startDate==null) ?(<p>Date will be announced soon</p>):(
+                                <p>Starting Date: {(Event.startDate.split('T')[0] == today.toISOString().split('T')[0]) ? ('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5)) : (Event.startDate.split('T')[0] + ' ' + Event.startDate.split('T')[1].slice(0, 5))}</p>) 
+                            }
+                            <button className={styles.buttonStyle} onClick={() => handleEdit(Event.EventID)}>
+                                {editSymbol}
+                            </button>
+                            <button className={styles.buttonStyle} onClick={() => handleDelete(Event.EventID)}>
+                                {deleteSymbol}
+                            </button>
+
+                        </div>
+                    ))}
+
+                </div>
+            </div>)
+
+    }
+
+    let Events_view = loadingEvents
+        ? <p><em>Loading...</em></p>
+        : renderEventsTable(Events);
+
     return (
-      <div>
-        <h1>Hello, world!</h1>
-        <p>Welcome to your new single-page application, built with:</p>
-        <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
-        </ul>
-        <p>To help you get started, we have also set up:</p>
-        <ul>
-          <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-          <li><strong>Development server integration</strong>. In development mode, the development server from <code>create-react-app</code> runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-          <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration produces minified, efficiently bundled JavaScript files.</li>
-        </ul>
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
-      </div>
-    );
-  }
+        <div>
+            <h1>Upcoming</h1>
+            <div>{Events_view}</div>
+
+        </div>
+    )
+
 }

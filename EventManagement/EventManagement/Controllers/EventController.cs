@@ -4,6 +4,7 @@ using EventManagement.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace EventManagement.Controllers
@@ -13,40 +14,50 @@ namespace EventManagement.Controllers
     [Route("[controller]")]
     public class EventController : ControllerBase
     {
-        
-        private readonly ILogger<EventController> _logger;
-        private ApplicationDbContext _dataContext; 
 
-        public EventController(ILogger<EventController> logger,ApplicationDbContext dbContext)
+        private readonly ILogger<EventController> _logger;
+        private ApplicationDbContext _dataContext;
+        
+
+        public EventController(ILogger<EventController> logger, ApplicationDbContext dbContext)
         {
             _logger = logger;
             _dataContext = dbContext;
+           
+
         }
 
+        [HttpGet("getEvents/{hostID}")]
+        public IEnumerable<Event> Get(string hostID)
+        {
+
+            return _dataContext.Events.Where(e => e.hostId == hostID).ToArray();
+            
+        }
         [HttpGet]
         public IEnumerable<Event> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new Event
-            {
-                Title = "Sample Event",
-                Description = "Description sample",
-                StartDate = DateTime.Now,
-            })
-            .ToArray();
+
+            return _dataContext.Events.ToArray();
+
         }
 
-
         [HttpPost("createEvent")]
-        public async Task<ActionResult> AddEvent([FromBody]EventDTO eventDetails)
+        public async Task<ActionResult> AddEvent([FromBody] EventDTO eventDetails)
         {
             Event eventToAdd = new Event()
             {
-                eventID=new Guid(),
+                eventID = new Guid(),
                 Title = eventDetails.Title,
-                Description = eventDetails.Description
+                Description = eventDetails.Description,
+                StartDate=eventDetails.DeserializeDate(),
+                hostId = eventDetails.hostId,
+                hostName=eventDetails.hostId
+
+
             };
             _dataContext.AddAsync(eventToAdd);
-            await _dataContext.SaveChangesAsync();  
+            await _dataContext.SaveChangesAsync();
             return Ok();
         }
 
@@ -66,5 +77,19 @@ namespace EventManagement.Controllers
             await _dataContext.SaveChangesAsync();
             return Ok();
         }
+
+
+        [HttpPut("editEvent")]
+        public async Task<ActionResult> Edit(string id, [FromBody] EventDTO eventDetails)
+        {
+            Event eventToEdit = _dataContext.Events.SingleOrDefault(d => (d.eventID).ToString() == id);
+            eventToEdit.Title = eventDetails.Title;
+            eventToEdit.Description = eventDetails.Description;
+            eventToEdit.StartDate = eventDetails.DeserializeDate();
+            eventToEdit.EndDate = DateTime.Now.AddDays(7);
+            _dataContext.SaveChangesAsync();
+            return Ok();
+
         }
+    }
 }

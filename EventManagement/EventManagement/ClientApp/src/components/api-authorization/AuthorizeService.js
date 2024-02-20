@@ -179,7 +179,8 @@ export class AuthorizeService {
       return;
     }
 
-    let response = await fetch(ApplicationPaths.ApiAuthorizationClientConfigurationUrl);
+      let response = await fetch(ApplicationPaths.ApiAuthorizationClientConfigurationUrl);
+    console.log('login respose' ,response)
     if (!response.ok) {
       throw new Error(`Could not load settings for '${ApplicationName}'`);
     }
@@ -191,7 +192,7 @@ export class AuthorizeService {
       prefix: ApplicationName
     });
 
-    this.userManager = new UserManager(settings);
+      this.userManager = new UserManager(settings);
 
     this.userManager.events.addUserSignedOut(async () => {
       await this.userManager.removeUser();

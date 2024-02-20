@@ -3,6 +3,8 @@
     public class Event
     {
         public Guid eventID { get; set; }
+        public string hostId { get; set; }
+        public string hostName { get; set; }
         public string Title { get; set; }
         public string? Description { get; set; }
         public DateTime? StartDate { get; set; }

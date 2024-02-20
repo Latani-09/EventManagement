@@ -1,6 +1,7 @@
 ﻿using EventManagement.Controllers;
 using EventManagement.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Reflection;
 
 namespace EventManagement.Models
@@ -9,9 +10,6 @@ namespace EventManagement.Models
     {
       
         private ApplicationDbContext db;
-
-      
-
 
         public   IQueryable<Event> FindAllEvents()
         {
@@ -39,6 +37,7 @@ namespace EventManagement.Models
             db.Events.AddAsync(Event);
         }
 
+
         public async void Delete(Event Event)
         {
             db.RSVPs.RemoveRange(Event.Rsvps);
@@ -52,6 +51,6 @@ namespace EventManagement.Models
         {
             db.SaveChangesAsync();
         }
-
+       
     }
 }
