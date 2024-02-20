@@ -1,6 +1,6 @@
 import ApiAuthorzationRoutes from './components/api-authorization/ApiAuthorizationRoutes';
-import { Counter } from "./components/Counter";
-import { FetchData } from "./components/FetchData";
+import { EventManagement } from "./components/EventManagement";
+import { EventDashboard } from "./components/EventDashboard";
 import { Home } from "./components/Home";
 
 const AppRoutes = [
@@ -9,13 +9,13 @@ const AppRoutes = [
     element: <Home />
   },
   {
-    path: '/counter',
-    element: <Counter />
+      path: '/EventManagement',
+      element: <EventManagement />
   },
   {
-    path: '/fetch-data',
+    path: '/eventDashboard',
     requireAuth: true,
-    element: <FetchData />
+    element: <EventDashboard />
   },
   ...ApiAuthorzationRoutes
 ];

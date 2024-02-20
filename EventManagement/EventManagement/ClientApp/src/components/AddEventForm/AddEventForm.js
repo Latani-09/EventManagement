@@ -5,23 +5,18 @@ import moment from 'moment';
 import { Form, Button, InputGroup, FormControl, Label } from 'react-bootstrap';
 import "react-datepicker/dist/react-datepicker.css";
 const AddEventForm=(props) =>{
-
+    
     const [eventName, onEventNameChange] = useState(props.event ? props.event.eventName : '');
     const [description, onDescriptionChange] = useState(props.event ? props.event.description : '');
-    const [imageUrl, onImageUrlChange] = useState(props.event ? props.event.imageUrl : '');
     const [startDate, onStartDateChange] = useState(new Date());
     const [endDate, onEndDateChange] = useState(new Date());
     const [startTime, onStartTimeChange] = useState(props.event ? moment(props.event.startTime) : moment());
     const [endTime, onEndTimeChange] = useState(props.event ? moment(props.event.endTime) : moment());
     const [location, onLocationChange] = useState(props.event ? props.event.location : '');
-    const [fee, onFeeChange] = useState(props.event ? props.event.fee : '');
-    const [focusedInput, onFocusedInputChange] = useState(null);
-    const [calendarFocused, onCalendarFocusedChange] = useState(false);
-    const [error, onErrorChange] = useState('');
-    const [toggle, toggler] = useState(false);
-    const [image, onImage] = useState();
     const [multiDayEvent, onMultiDayEventChange] = useState('');
     const formData = new FormData();
+    const [error, onErrorChange] = useState('');
+    console.log('intialized form data', formData);
 
     const onTitleChange = (e) => {
         onEventNameChange(e.target.value);
@@ -30,12 +25,7 @@ const AddEventForm=(props) =>{
     const handleLocationChange = (e) => {
         onLocationChange(e.target.value)
     }
-    const handleFeeChange = (e) => {
-        const fees = e.target.value;
-        if (!fees || fees.match(/^\d{1,}(\.\d{0,2})?$/)) {
-            onFeeChange(fees)
-        }
-    }
+
 
     const handleDescriptionChange = (e) => {
         const description = e.target.value;
@@ -53,35 +43,19 @@ const AddEventForm=(props) =>{
 
     };
 
-    const handleEditPicture = () => {
-        const fileInput = document.getElementById('imageChange');
-        fileInput.click();
-    }
-    const onImageChange = (e) => {
-        onImage(e.target.files[0]);
-        const url = URL.createObjectURL(e.target.files[0]);
-        onImageUrlChange(url);
-        console.log(!!image);
 
-    }
+
 
     //for DateRangePicker
     const handleDatesChange = ({ startDate, endDate }) => {
         onStartDateChange(startDate);
         onEndDateChange(endDate);
     }
-
-    const handleMultiFocusChange = (focusedInput) => {
-        onFocusedInputChange(focusedInput);
-    };
-
+    
     // for singleDatePicker
     const handleDateChange = (startDate) => {
         onStartDateChange(startDate);
         onEndDateChange(startDate);
-    };
-    const handleFocusChange = ({ focused }) => {
-        onCalendarFocusedChange(focused);
     };
 
     const isMultiDayEvent = () => {
@@ -99,42 +73,40 @@ const AddEventForm=(props) =>{
         else if (!location) {
             onErrorChange('Please provide the venue.');
         }
-        else if (!fee) {
-            onErrorChange('Please provide the fee.');
-        }
+
 
         else {
             onErrorChange('');
             const check = {
                 eventName,
                 description,
-                startDate: startDate.format("LL"),
-                endDate: endDate.format("LL"),
-                startTime: startTime.format("LT"),
-                endTime: endTime.format("LT"),
-                fee,
-                location
+                startDate: startDate,
+                endDate: endDate,
+                startTime: startTime,
+                endTime: endTime,
+                        location
             }
-            formData.append('eventName', eventName);
-            formData.append('description', description)
-            formData.append('startDate', startDate.format("LL"));
-            formData.append('endDate', endDate.format("LL"))
-            formData.append('startTime', startTime.format("LT"));
-            formData.append('endTime', endTime.format("LT"))
-            formData.append('fee', fee);
-            formData.append('location', location);
-            console.log(!!image);
-            !!image && formData.append('image', image, image.name);
-            console.log(check)
+            console.log('event daya from add data' ,eventName)
+            formData.append('Title', eventName);
+            formData.append('Description', description)
+   
+
+          
+            formData.append('Location', location);
+            for (const key of formData.keys()) {
+                console.log(key);
+            }
+            for (const value of formData.values()) {
+                console.log(value);
+            }
+
+            console.log('form data from add event component', formData);
             props.onSubmit(formData);
         }
+        
     }
         return (<div className="form">
-            <div className="form-image ">
-                {props.event ? <div className="form-image-exist"><img src={imageUrl || props.event.imageUrl} alt='' /></div> : (imageUrl ? <img src={imageUrl} alt="" /> : <img src='images/empty.jpg' alt='' />)}
-                <input type="file" hidden="hidden" name="" id="imageChange" onChange={onImageChange} />
-                <Button className="btn third" onClick={handleEditPicture}>{props.event ? 'edit image' : "add image"}</Button>
-            </div>
+
             <Form action="" onSubmit={onSubmit}>
                 {error && <p className="form__error">{error}</p>}
                 <div className="form-content__main">
@@ -162,18 +134,6 @@ const AddEventForm=(props) =>{
                                 onChange={handleLocationChange}
                             />
 
-                            <div className="form-fees">
-                                <label>Fees:</label>
-                                <div className="form-fees__icon">
-                                    <input type="text"
-                                        value={fee}
-                                        onChange={handleFeeChange}
-                                    />
-                                    {/* <FontAwesomeIcon className="icon" icon={faRupeeSign} /> */}
-                                </div>
-                            </div>
-
-                           
                         </div>
                         <div InputGroup>
                            
