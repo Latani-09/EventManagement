@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace EventManagement.Controllers
 {
-    [Authorize]
+   
     [ApiController]
     [Route("[controller]")]
     public class EventController : ControllerBase
@@ -26,13 +26,13 @@ namespace EventManagement.Controllers
            
 
         }
-
+        [Authorize]
         [HttpGet("getEvents/{hostID}")]
-        public IEnumerable<Event> Get(string hostID)
+        public async Task<ActionResult<IEnumerable<Event>>> Get(string hostID)
         {
 
-            return _dataContext.Events.Where(e => e.hostId == hostID).ToArray();
-            
+            var events = _dataContext.Events.Where(e => e.hostId == hostID).ToArray();
+            return events;
         }
         [HttpGet]
         public IEnumerable<Event> Get()
@@ -42,6 +42,7 @@ namespace EventManagement.Controllers
 
         }
 
+        [Authorize]
         [HttpPost("createEvent")]
         public async Task<ActionResult> AddEvent([FromBody] EventDTO eventDetails)
         {
@@ -52,7 +53,8 @@ namespace EventManagement.Controllers
                 Description = eventDetails.Description,
                 StartDate=eventDetails.DeserializeDate(),
                 hostId = eventDetails.hostId,
-                hostName=eventDetails.hostId
+                hostName=eventDetails.hostId,
+                Location=eventDetails.Location
 
 
             };
@@ -60,7 +62,7 @@ namespace EventManagement.Controllers
             await _dataContext.SaveChangesAsync();
             return Ok();
         }
-
+        [Authorize]
         [HttpDelete("delete/{eventID}")]
         public async Task<ActionResult> Delete(string eventID)
         {
@@ -78,7 +80,7 @@ namespace EventManagement.Controllers
             return Ok();
         }
 
-
+        [Authorize]
         [HttpPut("editEvent")]
         public async Task<ActionResult> Edit(string id, [FromBody] EventDTO eventDetails)
         {

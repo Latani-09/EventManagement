@@ -10,6 +10,7 @@ const AppRoutes = [
   },
   {
       path: '/EventManagement',
+      requireAuth: true,
       element: <EventManagement />
   },
   {

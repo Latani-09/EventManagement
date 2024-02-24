@@ -11,5 +11,6 @@
         public DateTime? EndDate { get; set; }
         public string? Location { get; set;}
         public virtual ICollection<RSVP> Rsvps { get; set; }
+        public int No_Attending {  get; set; } = 0;
     }
 }

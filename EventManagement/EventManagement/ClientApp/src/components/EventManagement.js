@@ -1,6 +1,6 @@
 import React, { Component, useState,useEffect } from 'react';
 import Form from 'react-bootstrap/Form';
-import styles from './eventCalender.module.css';
+import styles from './Styles.module.css';
 import authService from './api-authorization/AuthorizeService';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
@@ -123,19 +123,24 @@ export const EventManagement = () => {
                 <div className={styles.gridStyle}>
                     {Events.map((Event) => (
                         <div key={Event.EventID} className={styles.tileStyle}>
-                            <h5 className={styles.h3Style}>{Event.title}</h5>
-                            {(Event.startDate == null) ? (<p>Date will be announced soon</p>) : (
-                                <p>Starting Date: {(Event.startDate.split('T')[0] == today.toISOString().split('T')[0]) ? ('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5)) : (Event.startDate.split('T')[0] + ' ' + Event.startDate.split('T')[1].slice(0, 5))}</p>)
-                            }
-                            <div class="d-flex justify-content-between">
-                                <button class="btn btn-primary" onclick="handleEdit(Event.EventID)">
+                            <div className={`container ${styles.EventsContainer}`}>
+                                <h5 className={styles.containerTitle}>{Event.title}</h5>
+                              
+                         
+                            {(Event.startDate == null) ? (<p>Date is not set yet</p>) : (
+                                <p>On  {(Event.startDate.split('T')[0] == today.toISOString().split('T')[0]) ? ('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5)) : (Event.startDate.split('T')[0] + ' ' + Event.startDate.split('T')[1].slice(0, 5))}</p>)
+                                }
+                                {Event.no_Attending == 0 ? (<p>No registrations yet</p>) : (<p className={styles.h3style}>{Event.no_Attending} Registered</p>)}
+                            </div>
+                                <div class="d-flex p-2 justify-content-between  " >
+                                    <button className={`btn btn-info  ${styles.actionButton}`} onclick="handleEdit(Event.EventID)">
                                     Edit
                                 </button>
-                                <button class="btn btn-danger" onclick="handleDelete(Event.EventID)">
-                                    Delete
+                                    <button className={`btn btn-danger ${styles.actionButton}`} onclick="handleDelete(Event.EventID)">
+                                    Cancel 
                                 </button>
+                       
                             </div>
-
                         </div>
                     ))}
 
@@ -149,16 +154,16 @@ export const EventManagement = () => {
         : renderEventsTable(Events);
 
     return (
-        <div>
-            <div>
-                <button onClick={togglePop} className="btn-btn-primary">Host an Event</button>
-                {seen ? <Popup toggle={togglePop} addEvent={addEvent} hostID={hostID} setHostID={setHostID} /> : null}
-            </div>
-            <div>
+        <div className='md-4 '>
+            <div class='container d-flex p-3 justify-content-between ' >
                 <h1>Planned events</h1>
-                <div>{Events_view}</div>
-
+                <button onClick={togglePop} className={`btn btn-info ${styles.hostButton}`}>
+                    Host an Event
+                </button>
             </div>
+                {seen ? <Popup toggle={togglePop} addEvent={addEvent} hostID={hostID} setHostID={setHostID} /> : null}
+            
+            <div>{Events_view}</div>
         </div>
     );
 }
@@ -225,7 +230,7 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                                     className="form-control"
                                     value={eventName}
                                     onChange={(e) => onEventNameChange(e.target.value)}
-                                    placeholder="Enter task"
+                                    placeholder="Enter Event Title"
                                 />
                             </div>
                             <div className="form-group">
@@ -235,7 +240,7 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                                     className="form-control"
                                     value={location}
                                     onChange={(e) => onLocationChange(e.target.value)}
-                                    placeholder="Enter description"
+                                    placeholder="Enter location"
                                 />
                             </div>
                             <div className="form-group">
@@ -250,7 +255,8 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                             </div>
 
 
-                            <div className="form-content__checkbox-calendar">
+                            <div className=" d-flex p-3 form-content__checkbox-calendar">
+                          
                                 {multiDayEvent ? (<div>
                                     <DatePicker selected={startDate} onChange={(date) => onStartDateChange(date)} />
                                     <DatePicker selected={endDate} onChange={(date) => onEndDateChange(date)} />
@@ -271,7 +277,7 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                             </div>
 
                             <div className="modal-footer">
-                                <button type="submit" className="btn btn-primary">
+                                <button type="submit" className={`btn btn-primary ${styles.hostButton}`}>
                                     Add
                                 </button>
                                 <button type="button" className="btn btn-secondary" onClick={toggle}>

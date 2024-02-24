@@ -1,3 +1,4 @@
+using EventManagement;
 using EventManagement.Data;
 using EventManagement.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -13,20 +14,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => { options.SignIn.RequireConfirmedAccount = true; })
     .AddEntityFrameworkStores<ApplicationDbContext>();
-
+builder.Services.AddAuthentication()
+    .AddIdentityServerJwt();
 builder.Services.AddIdentityServer()
     .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
-builder.Services.AddAuthentication()
-    .AddIdentityServerJwt();
+
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
+/*
+try
+{
+    await SendMail.Execute();
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex);
+}
 
+*/
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
