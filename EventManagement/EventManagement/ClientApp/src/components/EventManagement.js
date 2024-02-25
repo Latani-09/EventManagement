@@ -178,6 +178,7 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
     const [endTime, onEndTimeChange] = useState(moment());
     const [location, onLocationChange] = useState( '');
     const [multiDayEvent, onMultiDayEventChange] = useState('');
+    const [foodServed, OnFoodServedChange] = useState(false);
 
     
     const handleDateChange = (startDate) => {
@@ -274,6 +275,13 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
 
                             </div>
                             <div>
+                                <div>
+                                    <label class="food-checkbox">
+                                        <input type="checkbox" name="foodServed" onChange={OnFoodServedChange} />
+                                        <span class="checkmark"></span>
+                                        Food will be served
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="modal-footer">

@@ -84,9 +84,9 @@ namespace EventManagement.Controllers
             
             var apiKey = _configuration.GetSection("SendGrid")["ApiKey"];
             var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("tlatani18@gmail.com", "Event organizer");
+            var from = new EmailAddress("latani2709@gmail.com", "Event organizer");
             var subject = "Event Registration confirmation";
-            var to = new EmailAddress("latani2709@gmail.com", "User");
+            var to = new EmailAddress("tlatani18@gmail.com", "User");
             var plainTextContent = "Thank you for registering event Following are the details of events";
             var htmlContent = $"<strong>Your email has been registered for the Event.{title} </strong>";
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
