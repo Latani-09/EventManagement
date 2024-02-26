@@ -5,12 +5,13 @@ import authService from './api-authorization/AuthorizeService';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { toast } from 'react-toastify';
+import { toast,ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 // Declare addEvent function here
 
 export const EventManagement = () => {
     const [seen, setSeen] = useState(false);
+    const [refresh, setRefresh] = useState(false);
     const [hostID, setHostID] = useState(null);
     const togglePop = () => {
         setSeen(!seen);
@@ -29,9 +30,16 @@ export const EventManagement = () => {
             body: JSON.stringify(EventToAdd)
         });
 
-        const data = await response.json();
+        
 
+        if (response.ok) {
+            toast.success("Event added successfully");
+            setRefresh(!refresh);
+            
+
+        }
         console.log(response);
+
 
        
         // Handle the data as needed, e.g., update state or perform other actions
@@ -43,7 +51,7 @@ export const EventManagement = () => {
 
     useEffect(() => {
         populateEvents();
-    }, []); // Empty dependency array to mimic componentDidMount
+    }, [refresh]); // dependency array to mimic componentDidMount
 
     const populateEvents = async () => {
         try {
@@ -51,7 +59,7 @@ export const EventManagement = () => {
             const token = await authService.getAccessToken();
             const user = await authService.getUser();
             setHostID(user.name);
-
+            
             const response = await fetch(`Event/getEvents/${user.name}`, {
                 headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
             });
@@ -74,19 +82,23 @@ export const EventManagement = () => {
 
         const togglePop = () => {
             setSeen(!seen);
+            populateEvents();
         };
         let expandedEventId = null;
         const deleteEvent = async (EventId) => {
             try {
                 const token = await authService.getAccessToken();
-                const response = await fetch(`Event/EventDelete${EventId}`, {
+                const response = await fetch(`Event/Delete/${EventId}`, {
                     method: 'delete',
                     headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 });
 
                 if (response.ok) {
-                    toast.success("Event deleted successfully!");
-
+                    toast.success("Event Cancelled!");
+                   
+                    setRefresh(!refresh);
+                    
+                    
                     // Optionally, you can update the state or perform other actions after a successful deletion.
                 } else {
                     const errorData = await response.json();
@@ -112,6 +124,7 @@ export const EventManagement = () => {
             // Handle delete operation
 
             console.log(`Delete Event with ID: ${EventId}`);
+            setRefresh(true);
         };
 
         let today = new Date();
@@ -122,22 +135,23 @@ export const EventManagement = () => {
             <div>
                 <div className={styles.gridStyle}>
                     {Events.map((Event) => (
-                        <div key={Event.EventID} className={styles.tileStyle}>
+                        <div key={Event.eventID} className={styles.tileStyle}>
                             <div className={`container ${styles.EventsContainer}`}>
                                 <h5 className={styles.containerTitle}>{Event.title}</h5>
-                              
+                           
                          
                             {(Event.startDate == null) ? (<p>Date is not set yet</p>) : (
                                 <p>On  {(Event.startDate.split('T')[0] == today.toISOString().split('T')[0]) ? ('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5)) : (Event.startDate.split('T')[0] + ' ' + Event.startDate.split('T')[1].slice(0, 5))}</p>)
                                 }
                                 {Event.no_Attending == 0 ? (<p>No registrations yet</p>) : (<p className={styles.h3style}>{Event.no_Attending} Registered</p>)}
                             </div>
+                          
                                 <div class="d-flex p-2 justify-content-between  " >
-                                    <button className={`btn btn-info  ${styles.actionButton}`} onclick="handleEdit(Event.EventID)">
+                                <button className={`btn btn-info ${styles.actionButton}`} onClick={() => handleEdit(Event.eventID)}>
                                     Edit
                                 </button>
-                                    <button className={`btn btn-danger ${styles.actionButton}`} onclick="handleDelete(Event.EventID)">
-                                    Cancel 
+                                <button className={`btn btn-danger ${styles.actionButton}`} onClick={() => handleDelete(Event.eventID)}>
+                                    Cancel
                                 </button>
                        
                             </div>
@@ -145,6 +159,7 @@ export const EventManagement = () => {
                     ))}
 
                 </div>
+              
             </div>)
 
     }
@@ -154,6 +169,7 @@ export const EventManagement = () => {
         : renderEventsTable(Events);
 
     return (
+        <div>
         <div className='md-4 '>
             <div class='container d-flex p-3 justify-content-between ' >
                 <h1>Planned events</h1>
@@ -164,6 +180,8 @@ export const EventManagement = () => {
                 {seen ? <Popup toggle={togglePop} addEvent={addEvent} hostID={hostID} setHostID={setHostID} /> : null}
             
             <div>{Events_view}</div>
+            </div>
+            <ToastContainer/>
         </div>
     );
 }
@@ -178,14 +196,16 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
     const [endTime, onEndTimeChange] = useState(moment());
     const [location, onLocationChange] = useState( '');
     const [multiDayEvent, onMultiDayEventChange] = useState('');
-    const [foodServed, OnFoodServedChange] = useState(false);
+    const [foodServed, onChangeFoodServed] = useState(false);
 
     
     const handleDateChange = (startDate) => {
         onStartDateChange(startDate);
         onEndDateChange(startDate);
     };
-
+    const handleFoodServedChange = (event) => {
+        onChangeFoodServed(event.target.checked);
+    };
     const handleSubmit = (e) => {
         e.preventDefault();
         
@@ -199,18 +219,20 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
             setHostID(user.name);
         }
         var event_to_add = {
-
             Title: eventName,
             Description: description,
             StartDate: adjustedDate.toISOString(),
             Location: location,
-            hostID: hostID
+            hostID: hostID,
+            foodServed: String(foodServed)
             
         };
 
-        addEvent(event_to_add);
+        var response = addEvent(event_to_add);
+
 
         toggle(); // Close the popup after submitting
+
     };
 
     return (
@@ -276,11 +298,16 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                             </div>
                             <div>
                                 <div>
-                                    <label class="food-checkbox">
-                                        <input type="checkbox" name="foodServed" onChange={OnFoodServedChange} />
-                                        <span class="checkmark"></span>
-                                        Food will be served
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={foodServed}
+                                            onChange={handleFoodServedChange}
+                                        />
+                                        Food Served
                                     </label>
+
+                                    
                                 </div>
                             </div>
 

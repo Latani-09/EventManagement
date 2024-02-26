@@ -46,15 +46,17 @@ namespace EventManagement.Controllers
         [HttpPost("createEvent")]
         public async Task<ActionResult> AddEvent([FromBody] EventDTO eventDetails)
         {
+
             Event eventToAdd = new Event()
             {
                 eventID = new Guid(),
                 Title = eventDetails.Title,
                 Description = eventDetails.Description,
-                StartDate=eventDetails.DeserializeDate(),
+                StartDate = eventDetails.DeserializeDate(),
                 hostId = eventDetails.hostId,
-                hostName=eventDetails.hostId,
-                Location=eventDetails.Location
+                hostName = eventDetails.hostId,
+                Location = eventDetails.Location,
+                foodServed = bool.Parse(eventDetails.foodServed)
 
 
             };

@@ -1,0 +1,38 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\WEB DEV PROJECTS\\EventManagement\\CodeAlpha_EventManagement\\Latani-09\\CodeAlpha_EventManagement\\EventManagement\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{63487078-53D4-4D43-AD42-AB6EFAEC3815}|EventManagement\\EventManagement.csproj|e:\\web dev projects\\eventmanagement\\codealpha_eventmanagement\\latani-09\\codealpha_eventmanagement\\eventmanagement\\eventmanagement\\clientapp\\src\\components\\eventmanagement.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}|",
+      "RelativeMoniker": "D:0:0:{63487078-53D4-4D43-AD42-AB6EFAEC3815}|EventManagement\\EventManagement.csproj|solutionrelative:eventmanagement\\clientapp\\src\\components\\eventmanagement.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "EventManagement.js",
+              "DocumentMoniker": "E:\\WEB DEV PROJECTS\\EventManagement\\CodeAlpha_EventManagement\\Latani-09\\CodeAlpha_EventManagement\\EventManagement\\EventManagement\\ClientApp\\src\\components\\EventManagement.js",
+              "RelativeDocumentMoniker": "EventManagement\\ClientApp\\src\\components\\EventManagement.js",
+              "ToolTip": "E:\\WEB DEV PROJECTS\\EventManagement\\CodeAlpha_EventManagement\\Latani-09\\CodeAlpha_EventManagement\\EventManagement\\EventManagement\\ClientApp\\src\\components\\EventManagement.js",
+              "RelativeToolTip": "EventManagement\\ClientApp\\src\\components\\EventManagement.js",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAIwA8AAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2024-02-26T16:02:46.517Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

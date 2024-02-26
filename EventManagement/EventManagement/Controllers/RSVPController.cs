@@ -9,10 +9,11 @@ using System.Net.Mail;
 using System.Net;
 using SendGrid.Helpers.Mail;
 using SendGrid;
+using EventManagement.Data.Migrations;
 
 namespace EventManagement.Controllers
 {
-    [Authorize]
+
     [ApiController]
     [Route("[controller]")]
     public class RSVPController : ControllerBase
@@ -39,26 +40,21 @@ namespace EventManagement.Controllers
         }
 
 
-        [HttpPost("createRSVP")]
-        public async Task<ActionResult> AddRSVP([FromBody] RSVPDTO rsvp)
+        [HttpGet("confirmRSVP/{rsvpID}")]
+        public async Task<ActionResult> confirmRSVP(string rsvpID)
         {
-            Console.Write("eventID to search", rsvp.eventID);
-            var e = await _dataContext.Events
-     .SingleOrDefaultAsync(t => t.eventID.ToString() == rsvp.eventID);
-            Console.Write("eventID found", e.eventID);
-            RSVP rsvpToAdd = new RSVP()
+            var rsvp = await _dataContext.RSVPs.SingleOrDefaultAsync(t => t.RSVPID.ToString() == rsvpID);
+            if (rsvp != null)
             {
-                RSVPID = new Guid(),
-                EventID = e.eventID,
-                attendieName = rsvp.attendieName,
-                emailID = rsvp.emailID,
-                
-            };
-            e.No_Attending += 1;
-            await _dataContext.RSVPs.AddAsync(rsvpToAdd);
-            await _dataContext.SaveChangesAsync();
+                rsvp.confirmed = true;
+
+
+                await _dataContext.SaveChangesAsync();
+                return Ok();
+            }
+            return BadRequest();
+
             
-            return Ok();
         }
 
         [HttpDelete("delete/{RSVPID}")]
@@ -79,19 +75,37 @@ namespace EventManagement.Controllers
             return Ok();
         }
 
-        [HttpPost("sendMail/{title}")]
-        public async Task SendMail(string title){
-            
-            var apiKey = _configuration.GetSection("SendGrid")["ApiKey"];
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("latani2709@gmail.com", "Event organizer");
-            var subject = "Event Registration confirmation";
-            var to = new EmailAddress("tlatani18@gmail.com", "User");
-            var plainTextContent = "Thank you for registering event Following are the details of events";
-            var htmlContent = $"<strong>Your email has been registered for the Event.{title} </strong>";
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-            var response = await client.SendEmailAsync(msg);
-            Console.WriteLine(response.StatusCode);
+        [HttpPost("sendMail")]
+        public async Task<ActionResult> SendMail([FromBody] RSVPDTO rsvp){
+            var e = await _dataContext.Events
+     .SingleOrDefaultAsync(t => t.eventID.ToString() == rsvp.eventID);
+            Console.Write("eventID found", e.eventID,e.hostId,e.Title);
+
+
+                RSVP rsvpToAdd = new RSVP()
+                {
+                    RSVPID = new Guid(),
+                    EventID = e.eventID,
+                    attendieName = rsvp.attendieName,
+                    emailID = rsvp.emailID,
+
+                };
+
+                await _dataContext.RSVPs.AddAsync(rsvpToAdd);
+                await _dataContext.SaveChangesAsync();
+                var apiKey = _configuration.GetSection("SendGrid")[e.hostId];
+                var client = new SendGridClient(apiKey);
+                var from = new EmailAddress(e.hostId, "Event organizer");
+                var subject = "Event Registration confirmation";
+                var to = new EmailAddress(rsvp.emailID, "User");
+                var plainTextContent = "Thank you for registering the following event";
+                var htmlContent = $"<h1><strong>{e.Title} </strong></h1><p>Starting Date and time: {e.StartDate}<p><p>Click the link below to confirm participation </p><p>https://localhost:44431/rsvpConfirm/{rsvpToAdd.RSVPID}</p>";
+                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+                var response = await client.SendEmailAsync(msg);
+                Console.WriteLine(response.StatusCode);
+                return Ok();
+
+           
         }
     }
 

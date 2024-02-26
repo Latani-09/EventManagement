@@ -31,6 +31,13 @@ export class AuthorizeService {
     const user = await this.userManager.getUser();
     return user && user.access_token;
   }
+  async onSignIn(googleUser) {
+    var profile = googleUser.getBasicProfile();
+    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    console.log('Name: ' + profile.getName());
+    console.log('Image URL: ' + profile.getImageUrl());
+    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+}
 
   // We try to authenticate the user in three different ways:
   // 1) We try to see if we can authenticate the user silently. This happens

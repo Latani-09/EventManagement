@@ -1,28 +1,23 @@
 import React, { Component, useState, useEffect } from 'react';
 import Form from 'react-bootstrap/Form';
 import authService from './api-authorization/AuthorizeService';
-import {toast} from 'react-toastify';
+import {toast,ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './Styles.module.css';
 import { Eye } from 'react-bootstrap-icons';
-import {
-    Card,
-    CardBody,
-    CardFooter,
-    CardHeader,
-    CardImageHeader,
-    CardText,
-    CardTitle,
-} from 'react-bootstrap';
+
 
 export const Home=()=> {
     const [loadingEvents, setLoading] = useState(false);
     const[Events, setEvents] = useState([]);
-    const[seen, setSeen] = useState(false);
+    const [seen, setSeen] = useState(false);
+    const [eventIDReg, setID] = useState('');
+    const [eventTitle, setTitle] = useState("");
+   
 
     useEffect(() => {
         populateEvents();
-    }, []); // Empty dependency array to mimic componentDidMount
+    }, []);/// dependency array to mimic componentDidMount
 
     const populateEvents = async () => {
         try {
@@ -56,16 +51,17 @@ export const Home=()=> {
 
 
     const renderEventsTable = (Events, seen, setSeen) => {
-
-
+      
+        console.log(Events)
         const togglePop = () => {
             setSeen(!seen);
+           
         };
         let expandedEventId = null;
         const deleteEvent = async (EventId) => {
             try {
                 const token = await authService.getAccessToken();
-                const response = await fetch(`Event/EventDelete${EventId}`, {
+                const response = await fetch(`Event/Delete${EventId}`, {
                     method: 'delete',
                     headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 });
@@ -74,72 +70,56 @@ export const Home=()=> {
                     toast.success("Event deleted successfully!");
 
                     // Optionally, you can update the state or perform other actions after a successful deletion.
-                } else {
-                    const errorData = await response.json();
-                    toast.error(`Error deleting Event: ${errorData.message}`);
                 }
             } catch (error) {
-                console.error("An error occurred during Event deletion:", error);
+                console.error("An error occurred during Event deletion:", error.json());
                 toast.error("An unexpected error occurred while deleting the Event.");
             }
         }
         const markAttending = async  (rsvp) => {
             try {
                 const token = await authService.getAccessToken();
-                const response = await fetch(`RSVP/createRSVP`, {
+                const responseEmail = await fetch(`RSVP/sendMail`, {
                     method: 'post',
-                    headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(rsvp)
-                });
-
-                if (response.ok) {
-                    toast.success("event marked as attending");
-
-                    // Optionally, you can update the state or perform other actions after a successful deletion.
-                } else {
-                    const errorData = await response.json();
-                    toast.error(`Error responding Event: ${errorData.message}`);
-                }
-                const responseEmail = await fetch(`RSVP/sendMail/${rsvp.attendieName}`, {
-                    method: 'post',
-                    headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    headers: !token ? { 'Content-Type': 'application/json' } : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(rsvp)
                 });
                 console.log(responseEmail.json());
 
+                if (responseEmail.ok) {
+                    toast.success("Check mail inbox for Confirmation mail!");
+
+                    // Optionally, you can update the state or perform other actions after a successful deletion.
+                } 
+                
+
             } catch (error) {
-                console.error("An error occurred during Event response:", error);
-                toast.error("An unexpected error occurred ");
+
+                //toast.error(`Error responding Event: ${error}`);
+                console.error("An error occurred during Event response:", error  );
+               // toast.error("An unexpected error occurred ");
             }
            }
         const handleExpand = (EventId) => {
             expandedEventId = (EventId === expandedEventId ? null : EventId);
         };
+        
+        const handleAttend = async (eventID, title) => {
 
-        const handleAttend =async  (EventId) => {
             // Handle edit operation
-           
-                const user =await authService.getUser();
-            var hostID = user.name;
-            
-            var rsvp = {
-
-                eventID: EventId,
-                emailID: hostID,
-                attendieName: hostID
-
-            };
-
-            markAttending(rsvp);
-            console.log(`mark Event with ID: ${EventId}`);
+            togglePop()
+            setID(eventID);
+            setTitle(title);
+                
+            console.log(`mark Event with ID: ${eventID}`);
         };
-
-        const handleDelete = (EventId) => {
-            deleteEvent(EventId);
+        
+        const handleDelete = (eventId) => {
+            deleteEvent(eventId);
 
             // Handle delete operation
 
-            console.log(`Delete Event with ID: ${EventId}`);
+            console.log(`Delete Event with ID: ${eventId}`);
         };
 
         let today = new Date();
@@ -155,32 +135,36 @@ export const Home=()=> {
 
                     {Events.map((Event) => (
 
-                        <div key={Event.EventID} className={`${styles.tileStyle} ${styles.eventCard}`}>
+                        <div key={Event.eventID} className={`${styles.tileStyle} ${styles.eventCard}`}>
                             <button className={styles.viewButton} onClick={() => handleExpand(Event.eventID)}>
                                 <Eye />
                             </button>
                             <h6 className= { styles.containerTitle }>{Event.title}</h6>
-                            {(Event.Location == null) ? (null) : (<p className={styles.paraStyle}>@{Event.Location}</p>)}
                             {(Event.startDate == null) ? (
                                 <p>Date will be announced soon</p>
                             ) : (
                                 <div >
-                                    {(Event.startDate.split('T')[0] === today.toISOString().split('T')[0]) ? (
-                                        <p>{('Today' + '  ' + Event.startDate.split('T')[1].slice(0, 5))}</p>
+                                        {(Event.startDate.split('T')[0] === today.toISOString().split('T')[0]) ? (
+                                        <div>
+                                                <p className={styles.paraStyle}>Today</p>
+                                                <p className={styles.paraStyle}>{( Event.startDate.split('T')[1].slice(0, 5))}</p>
+                                        </div>
                                     ) : (
                                         <div>
-                                            <p className={styles.paraStyle} >On {Event.startDate.split('T')[0]}</p>
+                                                    <p className={styles.paraStyle} >On {Event.startDate.split('T')[0]}</p>
                                                     <p className={styles.paraStyle} >{Event.startDate.split('T')[1].slice(0, 5)} </p>
                                         </div>
                                         )}
+                                        {(Event.location == null) ? (null) : (<p className={styles.paraStyle}>@{Event.location}</p>)}
 
+                                        {Event.foodServed ? (<div className={styles.paraStyle} >Food will be served</div>) : (null)}
                                         
-                                        <button className={`btn btn-dark ${styles.registerButton}`} onClick={togglePop} >
+                                        <button className={`btn btn-dark ${styles.registerButton}`} onClick={() => handleAttend(Event.eventID, Event.title)} >
 
                                         Register
                                         </button>
                                         <div>
-                                            {seen ? <Popup toggle={togglePop} markAttending={markAttending} eventID={Event.eventID} /> : null}
+                                            {seen ? <Popup toggle={togglePop} markAttending={markAttending} id={eventIDReg} title={eventTitle} /> : null}
                                             </div>
                                 </div>
                             )}
@@ -188,6 +172,7 @@ export const Home=()=> {
                     ))}
 
                 </div>
+                <ToastContainer />
             </div>)
 
     }
@@ -208,21 +193,21 @@ export const Home=()=> {
 
 }
 
-const Popup = ({ toggle, markAttending, eventID }) => {
+const Popup = ({ toggle, markAttending, id, title}) => {
     const [attendieName, onNameChange] = useState('');
 
     const [emailID, onemailIDChange] = useState('');
-
-
-
+   
+    console.log("event Registering", id);
+    
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
+        console.log("event Registering", id);
       
         var RSVP = {
 
-            eventID: eventID,
+            eventID: id,
             emailID: emailID,
             attendieName: attendieName
 
@@ -238,13 +223,14 @@ const Popup = ({ toggle, markAttending, eventID }) => {
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title">Registerk</h5>
+                        <h5 className="modal-title">Register as a participant</h5>
                         <button type="button" className="close" onClick={toggle}>
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div className="modal-body">
                         <Form onSubmit={handleSubmit}>
+                            <h5>{title}</h5>
                             <div className="form-group">
                                 <input
                                     type="text"
@@ -254,6 +240,7 @@ const Popup = ({ toggle, markAttending, eventID }) => {
                                     placeholder="Enter Full Name"
                                 />
                             </div>
+                       
                             <div className="form-group">
                                 <label></label>
                                 <input

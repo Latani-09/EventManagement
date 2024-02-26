@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var config = builder.Configuration;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -18,6 +19,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => { options.SignIn
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddAuthentication()
     .AddIdentityServerJwt();
+/*
 builder.Services.AddAuthentication()
    .AddGoogle(options =>
    {
@@ -25,25 +27,9 @@ builder.Services.AddAuthentication()
        config.GetSection("Authentication:Google");
        options.ClientId = googleAuthNSection["ClientId"];
        options.ClientSecret = googleAuthNSection["ClientSecret"];
-   })
-   .AddFacebook(options =>
-   {
-       IConfigurationSection FBAuthNSection =
-       config.GetSection("Authentication:FB");
-       options.ClientId = FBAuthNSection["ClientId"];
-       options.ClientSecret = FBAuthNSection["ClientSecret"];
-   })
-   .AddMicrosoftAccount(microsoftOptions =>
-   {
-       microsoftOptions.ClientId = config["Authentication:Microsoft:ClientId"];
-       microsoftOptions.ClientSecret = config["Authentication:Microsoft:ClientSecret"];
-   })
-   .AddTwitter(twitterOptions =>
-   {
-       twitterOptions.ConsumerKey = config["Authentication:Twitter:ConsumerAPIKey"];
-       twitterOptions.ConsumerSecret = config["Authentication:Twitter:ConsumerSecret"];
-       twitterOptions.RetrieveUserDetails = true;
+       options.ReturnUrlParameter = googleAuthNSection["RedirectUris"];
    });
+  */ 
 builder.Services.AddIdentityServer()
     .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 

@@ -10,6 +10,7 @@ namespace EventManagement.DTOs
         public string? StartDate { get; set; }
         public string? EndDate { get; set; }
         public string? Location { get; set; }
+        public string? foodServed { get; set; }
         public DateTime? DeserializeDate()
         {
             if (StartDate != null)

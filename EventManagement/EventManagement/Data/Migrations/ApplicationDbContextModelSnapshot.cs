@@ -253,6 +253,9 @@ namespace EventManagement.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("foodServed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("hostId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -278,6 +281,9 @@ namespace EventManagement.Data.Migrations
                     b.Property<string>("attendieName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("confirmed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("emailID")
                         .HasColumnType("nvarchar(max)");
