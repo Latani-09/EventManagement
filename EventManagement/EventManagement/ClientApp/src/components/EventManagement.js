@@ -11,12 +11,35 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export const EventManagement = () => {
     const [seen, setSeen] = useState(false);
+    const [seenEdit,setSeenEdit]=useState(false)
     const [refresh, setRefresh] = useState(false);
     const [hostID, setHostID] = useState(null);
     const togglePop = () => {
         setSeen(!seen);
     };
+    const editEvent = async (eventToEdit) => {
+        const token = await authService.getAccessToken();
+        console.log('event came to event managetent', eventToEdit);
+        // var object = {};
+        //EventToAdd.forEach(function (value, key) {
+        //  object[key] = value;});
+        //var event = JSON.stringify(object);
+        const response = await fetch('Event/createEvent', {
+            method: 'post',
+            headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventToEdit)
+        });
 
+
+
+        if (response.ok) {
+            toast.success("Event edited successfully");
+            setRefresh(!refresh);
+
+
+        }
+        console.log(response);
+}
     const addEvent = async (EventToAdd) => {
         const token = await authService.getAccessToken();
         console.log('event came to event managetent', EventToAdd);
@@ -77,11 +100,15 @@ export const EventManagement = () => {
     };
 
 
-    const renderEventsTable = (Events, seen, setSeen) => {
+    const renderEventsTable = (Events, seen, setSeen, seenEdit, setSeenEdit) => {
 
 
         const togglePop = () => {
             setSeen(!seen);
+            populateEvents();
+        };
+        const togglePopEdit = () => {
+            setSeenEdit(!seenEdit);
             populateEvents();
         };
         let expandedEventId = null;
@@ -146,15 +173,15 @@ export const EventManagement = () => {
                                 {Event.no_Attending == 0 ? (<p>No registrations yet</p>) : (<p className={styles.h3style}>{Event.no_Attending} Registered</p>)}
                             </div>
                           
-                                <div class="d-flex p-2 justify-content-between  " >
-                                <button className={`btn btn-info ${styles.actionButton}`} onClick={() => handleEdit(Event.eventID)}>
-                                    Edit
-                                </button>
+                            <div class="d-flex p-2 justify-content-between  " >
+
+                               
                                 <button className={`btn btn-danger ${styles.actionButton}`} onClick={() => handleDelete(Event.eventID)}>
                                     Cancel
                                 </button>
                        
                             </div>
+                            {seenEdit ? <EditPopup toggle={togglePopEdit} editEvent={editEvent} hostID={hostID} setHostID={setHostID} eventID={Event.ID} eventNametoEdit={Event.eventName} /> : null}
                         </div>
                     ))}
 
@@ -314,6 +341,148 @@ const Popup = ({ toggle, addEvent,hostID,setHostID }) => {
                             <div className="modal-footer">
                                 <button type="submit" className={`btn btn-primary ${styles.hostButton}`}>
                                     Add
+                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={toggle}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </Form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const EditPopup = ({ toggle, editEvent, hostID, setHostID,eventID,eventNametoEdit }) => {
+    const [eventPrivacy, onPrivacyChange] = useState('Public');
+    const [eventName, onEventNameChange] = useState(eventNametoEdit);
+    const [description, onDescriptionChange] = useState('');
+    const [startDate, onStartDateChange] = useState(new Date());
+    const [endDate, onEndDateChange] = useState(new Date());
+    const [startTime, onStartTimeChange] = useState(moment());
+    const [endTime, onEndTimeChange] = useState(moment());
+    const [location, onLocationChange] = useState('');
+    const [multiDayEvent, onMultiDayEventChange] = useState('');
+    const [foodServed, onChangeFoodServed] = useState(false);
+
+
+    const handleDateChange = (startDate) => {
+        onStartDateChange(startDate);
+        onEndDateChange(startDate);
+    };
+    const handleFoodServedChange = (event) => {
+        onChangeFoodServed(event.target.checked);
+    };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const offsetInMinutes = 330; // UTC+5:30 (5 hours and 30 minutes ahead of UTC)
+
+        // Adjust the date by subtracting the offset (in milliseconds)
+        const adjustedDate = new Date(startDate.getTime() + offsetInMinutes * 60000);
+        console.log('start Date --------------------------------------', startDate, startDate.toISOString(), adjustedDate.toISOString());
+        if (hostID == null) {
+            const user = authService.getUser();
+            setHostID(user.name);
+        }
+        var event_to_add = {
+            Title: eventName,
+            Description: description,
+            StartDate: adjustedDate.toISOString(),
+            Location: location,
+            hostID: hostID,
+            foodServed: String(foodServed)
+
+        };
+
+        var response = editEvent(event_to_add);
+
+
+        toggle(); // Close the popup after submitting
+
+    };
+
+    return (
+        <div className="modal fade show" style={{ display: 'block' }}>
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Update Task</h5>
+                        <button type="button" className="close" onClick={toggle}>
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div className="modal-body">
+                        <Form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={eventName}
+                                    onChange={(e) => onEventNameChange(e.target.value)}
+                                    placeholder="Enter Event Title"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={location}
+                                    onChange={(e) => onLocationChange(e.target.value)}
+                                    placeholder="Enter location"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={description}
+                                    onChange={(e) => onDescriptionChange(e.target.value)}
+                                    placeholder="Enter description"
+                                />
+                            </div>
+
+
+                            <div className=" d-flex p-3 form-content__checkbox-calendar">
+
+                                {multiDayEvent ? (<div>
+                                    <DatePicker selected={startDate} onChange={(date) => onStartDateChange(date)} />
+                                    <DatePicker selected={endDate} onChange={(date) => onEndDateChange(date)} />
+                                </div>
+                                ) :
+                                    (
+                                        <DatePicker
+                                            selected={startDate}
+                                            onChange={handleDateChange}
+                                            showTimeSelect
+                                            dateFormat="Pp"
+                                        />
+                                    )
+                                }
+
+                            </div>
+                            <div>
+                                <div>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={foodServed}
+                                            onChange={handleFoodServedChange}
+                                        />
+                                        Food Served
+                                    </label>
+
+
+                                </div>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button type="submit" className={`btn btn-primary ${styles.hostButton}`}>
+                                    Update
                                 </button>
                                 <button type="button" className="btn btn-secondary" onClick={toggle}>
                                     Cancel

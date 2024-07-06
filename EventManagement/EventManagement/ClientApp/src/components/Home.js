@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import styles from './Styles.module.css';
 import { Eye } from 'react-bootstrap-icons';
 
+const isEmail = (email) =>
+    /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email);
 
 export const Home=()=> {
     const [loadingEvents, setLoading] = useState(false);
@@ -17,7 +19,7 @@ export const Home=()=> {
 
     useEffect(() => {
         populateEvents();
-    }, []);/// dependency array to mimic componentDidMount
+    }, []);
 
     const populateEvents = async () => {
         try {
@@ -57,25 +59,7 @@ export const Home=()=> {
             setSeen(!seen);
            
         };
-        let expandedEventId = null;
-        const deleteEvent = async (EventId) => {
-            try {
-                const token = await authService.getAccessToken();
-                const response = await fetch(`Event/Delete${EventId}`, {
-                    method: 'delete',
-                    headers: !token ? {} : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                });
-
-                if (response.ok) {
-                    toast.success("Event deleted successfully!");
-
-                    // Optionally, you can update the state or perform other actions after a successful deletion.
-                }
-            } catch (error) {
-                console.error("An error occurred during Event deletion:", error.json());
-                toast.error("An unexpected error occurred while deleting the Event.");
-            }
-        }
+        
         const markAttending = async  (rsvp) => {
             try {
                 const token = await authService.getAccessToken();
@@ -84,25 +68,26 @@ export const Home=()=> {
                     headers: !token ? { 'Content-Type': 'application/json' } : { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(rsvp)
                 });
-                console.log(responseEmail.json());
+                const result = await responseEmail.json();
 
                 if (responseEmail.ok) {
                     toast.success("Check mail inbox for Confirmation mail!");
+                } else if (result.message=='duplicateRSVP') {
+                    toast.error('already registered this event with this email Id'); // e.g., duplicateRSVP
+                }
 
-                    // Optionally, you can update the state or perform other actions after a successful deletion.
-                } 
-                
 
             } catch (error) {
-
+                
                 //toast.error(`Error responding Event: ${error}`);
-                console.error("An error occurred during Event response:", error  );
+                console.error("An error occurred during Event response:", error);
+               
+                toast.error("Oops something happened try again to Register ")
                // toast.error("An unexpected error occurred ");
             }
-           }
-        const handleExpand = (EventId) => {
-            expandedEventId = (EventId === expandedEventId ? null : EventId);
-        };
+        }
+
+
         
         const handleAttend = async (eventID, title) => {
 
@@ -114,19 +99,10 @@ export const Home=()=> {
             console.log(`mark Event with ID: ${eventID}`);
         };
         
-        const handleDelete = (eventId) => {
-            deleteEvent(eventId);
-
-            // Handle delete operation
-
-            console.log(`Delete Event with ID: ${eventId}`);
-        };
+       
 
         let today = new Date();
-        const editSymbol = '\u270E'; // Edit symbol
-        const deleteSymbol = '\u2716'; // Delete symbol
-        const expandSymbol = '\u2193'; // Expand symbol
-        const eyeSymbol ='\uF341';
+
 
 
         return (
@@ -136,9 +112,7 @@ export const Home=()=> {
                     {Events.map((Event) => (
 
                         <div key={Event.eventID} className={`${styles.tileStyle} ${styles.eventCard}`}>
-                            <button className={styles.viewButton} onClick={() => handleExpand(Event.eventID)}>
-                                <Eye />
-                            </button>
+
                             <h6 className= { styles.containerTitle }>{Event.title}</h6>
                             {(Event.startDate == null) ? (
                                 <p>Date will be announced soon</p>
@@ -197,14 +171,28 @@ const Popup = ({ toggle, markAttending, id, title}) => {
     const [attendieName, onNameChange] = useState('');
 
     const [emailID, onemailIDChange] = useState('');
-   
-    console.log("event Registering", id);
+    const [errors, setErrors] = useState({});
+ 
     
 
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log("event Registering", id);
-      
+
+    
+       const errors = {};
+
+        if (!isEmail(emailID)) {
+            errors.email = "Enter valid email";
+
+
+            setErrors(errors);
+
+            if (!Object.keys(errors).length) {
+                alert(JSON.stringify(emailID, null, 2));
+            }
+        }
+        else {
         var RSVP = {
 
             eventID: id,
@@ -212,10 +200,10 @@ const Popup = ({ toggle, markAttending, id, title}) => {
             attendieName: attendieName
 
         };
-
         markAttending(RSVP);
 
-        toggle(); // Close the popup after submitting
+            toggle(); // Close the popup after submitting
+        }
     };
 
     return (
@@ -250,6 +238,17 @@ const Popup = ({ toggle, markAttending, id, title}) => {
                                     onChange={(e) => onemailIDChange(e.target.value)}
                                     placeholder="Enter email ID"
                                 />
+                                {Object.entries(errors).map(([key, error]) => (
+                                    <span
+                                        key={`${key}: ${error}`}
+                                        style={{
+                                            fontWeight: "bold",
+                                            color: "red"
+                                        }}
+                                    >
+                                        {key}: {error}
+                                    </span>
+                                ))}
                             </div>
                            <div></div>
 

@@ -32,6 +32,7 @@ namespace EventManagement.Controllers
         {
 
             var events = _dataContext.Events.Where(e => e.hostId == hostID).ToArray();
+             
             return events;
         }
         [HttpGet]

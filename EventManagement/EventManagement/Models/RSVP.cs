@@ -8,5 +8,6 @@
         public Event Event { get; set; }
         public string attendieName { get; set; }
         public string? emailID { get; set; }
+        public bool confirmed { get; set; }=false;
     }
 }

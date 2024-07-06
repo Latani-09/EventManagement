@@ -40,8 +40,9 @@ export class LoginMenu extends Component {
     } else {
       const profilePath = `${ApplicationPaths.Profile}`;
       const logoutPath = `${ApplicationPaths.LogOut}`;
-      const logoutState = { local: true };
-      return this.authenticatedView(userName, profilePath, logoutPath, logoutState);
+        const logoutState = { local: true };
+        const Name = userName.split("@")[0];
+      return this.authenticatedView(Name, profilePath, logoutPath, logoutState);
     }
   }
 

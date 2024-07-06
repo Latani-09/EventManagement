@@ -43,11 +43,14 @@ namespace EventManagement.Controllers
         [HttpGet("confirmRSVP/{rsvpID}")]
         public async Task<ActionResult> confirmRSVP(string rsvpID)
         {
+           
             var rsvp = await _dataContext.RSVPs.SingleOrDefaultAsync(t => t.RSVPID.ToString() == rsvpID);
+
             if (rsvp != null)
             {
                 rsvp.confirmed = true;
-
+                var eventToupdate = await _dataContext.Events.FirstOrDefaultAsync(t => t.eventID.ToString() == rsvp.EventID.ToString());
+                eventToupdate.No_Attending += 1;
 
                 await _dataContext.SaveChangesAsync();
                 return Ok();
@@ -77,12 +80,23 @@ namespace EventManagement.Controllers
 
         [HttpPost("sendMail")]
         public async Task<ActionResult> SendMail([FromBody] RSVPDTO rsvp){
-            var e = await _dataContext.Events
+            var e = await _dataContext.Events.Include(ev=>ev.Rsvps)
      .SingleOrDefaultAsync(t => t.eventID.ToString() == rsvp.eventID);
+
             Console.Write("eventID found", e.eventID,e.hostId,e.Title);
+            if (e == null)
+            {
+                return NotFound("Event not found");
+            }
+            var existingRsvp = e.Rsvps.FirstOrDefault(r => r.emailID == rsvp.emailID);
 
+            if (existingRsvp != null)
+            {
 
-                RSVP rsvpToAdd = new RSVP()
+                return BadRequest(new { message = "duplicateRSVP" });
+            }
+
+            RSVP rsvpToAdd = new RSVP()
                 {
                     RSVPID = new Guid(),
                     EventID = e.eventID,
@@ -93,19 +107,26 @@ namespace EventManagement.Controllers
 
                 await _dataContext.RSVPs.AddAsync(rsvpToAdd);
                 await _dataContext.SaveChangesAsync();
-                var apiKey = _configuration.GetSection("SendGrid")[e.hostId];
+                var apiKey = _configuration.GetSection("SendGrid")["tlatani18@gmail.com"];  //replace with host.id
                 var client = new SendGridClient(apiKey);
-                var from = new EmailAddress(e.hostId, "Event organizer");
-                var subject = "Event Registration confirmation";
+                var from = new EmailAddress("tlatani18@gmail.com", "Event organizer");  //replace with host.id
+            var subject = "Event Registration confirmation";
                 var to = new EmailAddress(rsvp.emailID, "User");
                 var plainTextContent = "Thank you for registering the following event";
                 var htmlContent = $"<h1><strong>{e.Title} </strong></h1><p>Starting Date and time: {e.StartDate}<p><p>Click the link below to confirm participation </p><p>https://localhost:44431/rsvpConfirm/{rsvpToAdd.RSVPID}</p>";
                 var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
                 var response = await client.SendEmailAsync(msg);
+            Console.WriteLine(response.Body);
                 Console.WriteLine(response.StatusCode);
-                return Ok();
+            if (response.StatusCode == HttpStatusCode.Accepted)
+            {
+                return Ok(response.StatusCode);
 
-           
+            }
+            else
+            {
+                return BadRequest(response.StatusCode);
+            }
         }
     }
 
